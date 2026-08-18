@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role and enrolled classes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["STUDENT", "CR", "FACULTY", "ADMIN"] },
+        "activeClassId": { "type": "string", "maxLength": 128 },
+        "enrolledClassIds": { "type": "array", "description": "List of enrolled class cohort IDs" },
+        "university": { "type": "string", "maxLength": 150 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "ClassCohort": {
+      "title": "ClassCohort",
+      "description": "Academic cohort/section",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 32 },
+        "name": { "type": "string", "maxLength": 120 },
+        "universityId": { "type": "string", "maxLength": 128 },
+        "universityName": { "type": "string", "maxLength": 150 },
+        "program": { "type": "string", "maxLength": 100 },
+        "branch": { "type": "string", "maxLength": 100 },
+        "semester": { "type": "string", "maxLength": 50 },
+        "section": { "type": "string", "maxLength": 50 },
+        "academicYear": { "type": "string", "maxLength": 50 },
+        "totalStudents": { "type": "number" },
+        "crName": { "type": "string", "maxLength": 100 },
+        "crEmail": { "type": "string", "maxLength": 150 },
+        "facultyInCharge": { "type": "string", "maxLength": 100 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "code", "name"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Academic assignment and project tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "classId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 150 },
+        "subjectCode": { "type": "string", "maxLength": 30 },
+        "subjectName": { "type": "string", "maxLength": 100 },
+        "teacher": { "type": "string", "maxLength": 100 },
+        "owner": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["Active", "In Review", "Submitted", "Verified", "Archived"] },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Normal", "Low"] },
+        "estimatedHours": { "type": "number" },
+        "dueDate": { "type": "string", "maxLength": 100 },
+        "dueDateISO": { "type": "string", "maxLength": 100 },
+        "isCompleted": { "type": "boolean" },
+        "isPinned": { "type": "boolean" },
+        "isVerified": { "type": "boolean" },
+        "verifiedBy": { "type": "string", "maxLength": 100 },
+        "instructions": { "type": "array" },
+        "attachments": { "type": "array" },
+        "meetLink": { "type": "string", "maxLength": 300 },
+        "googleTaskId": { "type": "string", "maxLength": 150 },
+        "googleCalendarEventId": { "type": "string", "maxLength": 150 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdByRole": { "type": "string", "enum": ["STUDENT", "CR", "FACULTY", "ADMIN"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "classId", "title", "subjectCode", "priority"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "CR and faculty broadcasts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "classId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 150 },
+        "content": { "type": "string", "maxLength": 3000 },
+        "author": { "type": "string", "maxLength": 100 },
+        "authorRole": { "type": "string", "enum": ["STUDENT", "CR", "FACULTY", "ADMIN"] },
+        "priority": { "type": "string", "enum": ["Urgent", "Normal", "Info"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "classId", "title", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document keyed by auth UID"
+    },
+    "/classes/{classId}": {
+      "schema": "ClassCohort",
+      "description": "Class cohort data"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Class assignments and deadlines"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Class announcements and broadcasts"
+    }
+  }
+}

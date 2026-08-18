@@ -1,0 +1,6 @@
+{
+  "name": "Classora",
+  "description": "Universal academic deadline and assignment tracker with role-based CR/faculty management, analytics, calendar, and urgency engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
