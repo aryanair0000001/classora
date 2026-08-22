@@ -7,7 +7,9 @@ import {
   Clock,
   UserCheck,
   Download,
-  AlertCircle
+  AlertCircle,
+  Flame,
+  ShieldCheck
 } from 'lucide-react';
 import { Assignment, Role } from '../types/index.js';
 
@@ -27,39 +29,43 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   onTogglePin
 }) => {
   const isOverdue = !assignment.isCompleted && new Date(assignment.dueDateISO).getTime() < Date.now();
+  const isDueToday = !assignment.isCompleted && !isOverdue && (
+    assignment.dueDate.toLowerCase().includes('today') ||
+    new Date(assignment.dueDateISO).toDateString() === new Date().toDateString()
+  );
 
   const getPriorityStyle = (p: string) => {
     switch (p) {
       case 'Critical':
-        return 'text-red-700 bg-red-50 border-red-200';
+        return 'text-rose-300 bg-rose-500/20 border-rose-500/30';
       case 'High':
-        return 'text-orange-700 bg-orange-50 border-orange-200';
+        return 'text-amber-300 bg-amber-500/20 border-amber-500/30';
       case 'Normal':
-        return 'text-blue-700 bg-blue-50 border-blue-200';
+        return 'text-blue-300 bg-blue-500/20 border-blue-500/30';
       default:
-        return 'text-gray-700 bg-gray-50 border-gray-200';
+        return 'text-slate-400 bg-slate-800 border-slate-700';
     }
   };
 
   return (
     <div
       onClick={() => onSelect(assignment)}
-      className={`group relative bg-white rounded-lg border transition-all p-3.5 cursor-pointer shadow-xs hover:border-indigo-400 hover:shadow-sm ${
+      className={`group relative rounded-2xl border transition-all p-4 cursor-pointer shadow-md backdrop-blur-sm ${
         assignment.isCompleted
-          ? 'border-gray-200 bg-gray-50/60 opacity-85'
+          ? 'border-slate-800/80 bg-slate-900/40 opacity-75'
           : assignment.isPinned
-          ? 'border-indigo-200 bg-indigo-50/20'
-          : 'border-gray-200'
+          ? 'border-indigo-500/40 bg-indigo-950/20 hover:border-indigo-400'
+          : 'border-slate-800 bg-slate-900/80 hover:border-slate-700 hover:bg-slate-850'
       }`}
     >
       {/* Top row: Subject code, Status, Pin, Priority */}
-      <div className="flex items-center justify-between text-[11px] mb-2">
-        <div className="flex items-center space-x-1.5 font-mono">
-          <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+      <div className="flex items-center justify-between text-[11px] mb-2.5">
+        <div className="flex items-center space-x-2 font-mono">
+          <span className="font-bold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
             {assignment.subjectCode}
           </span>
-          <span className="text-gray-400">•</span>
-          <span className="text-gray-500 font-semibold truncate max-w-[140px]">
+          <span className="text-slate-500">•</span>
+          <span className="text-slate-300 font-semibold truncate max-w-[140px] sm:max-w-[200px]">
             {assignment.subjectName}
           </span>
         </div>
@@ -67,7 +73,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         <div className="flex items-center space-x-1.5">
           {/* Priority Pill */}
           <span
-            className={`px-1.5 py-0.5 rounded text-[10px] font-bold border font-mono ${getPriorityStyle(
+            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border font-mono ${getPriorityStyle(
               assignment.priority
             )}`}
           >
@@ -78,8 +84,8 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
           {userRole !== 'STUDENT' && (
             <button
               onClick={e => onTogglePin(assignment.id, e)}
-              className={`p-1 rounded hover:bg-gray-100 transition-colors ${
-                assignment.isPinned ? 'text-indigo-600' : 'text-gray-300 hover:text-gray-600'
+              className={`p-1.5 rounded-lg hover:bg-slate-800 transition-colors ${
+                assignment.isPinned ? 'text-indigo-400' : 'text-slate-600 hover:text-slate-300'
               }`}
               title={assignment.isPinned ? 'Unpin from Top' : 'Pin to Top (CR)'}
             >
@@ -90,52 +96,52 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
       </div>
 
       {/* Title & Checkbox */}
-      <div className="flex items-start space-x-2.5 mb-2.5">
+      <div className="flex items-start space-x-3 mb-3">
         <button
           onClick={e => onToggleComplete(assignment.id, e)}
-          className="mt-0.5 text-gray-300 hover:text-green-600 transition-colors flex-shrink-0"
+          className="mt-0.5 text-slate-500 hover:text-emerald-400 transition-colors flex-shrink-0"
           title={assignment.isCompleted ? 'Mark as Incomplete' : 'Mark as Done'}
         >
           {assignment.isCompleted ? (
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           ) : (
-            <Circle className="w-4 h-4 text-gray-300 group-hover:text-indigo-600" />
+            <Circle className="w-5 h-5 text-slate-600 group-hover:text-indigo-400" />
           )}
         </button>
 
         <div className="flex-1 min-w-0">
           <h3
-            className={`text-xs font-semibold leading-snug ${
-              assignment.isCompleted ? 'line-through text-gray-400' : 'text-gray-900'
+            className={`text-sm font-bold leading-snug tracking-tight ${
+              assignment.isCompleted ? 'line-through text-slate-500' : 'text-slate-100 group-hover:text-white'
             }`}
           >
             {assignment.title}
           </h3>
-          <p className="text-[11px] text-gray-500 line-clamp-1 mt-0.5">
+          <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
             {assignment.description}
           </p>
         </div>
       </div>
 
       {/* Footer: Due date, Teacher, Attachments, Faculty Verification */}
-      <div className="flex items-center justify-between text-[11px] pt-2 border-t border-gray-100 text-gray-500 font-mono">
-        <div className="flex items-center space-x-2">
+      <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-800/80 text-slate-400 font-mono">
+        <div className="flex items-center space-x-2.5">
           <span
             className={`inline-flex items-center space-x-1 font-semibold ${
               isOverdue
-                ? 'text-red-600 bg-red-50 px-1.5 py-0.5 rounded'
-                : assignment.dueDate.includes('Today')
-                ? 'text-red-700 bg-red-50 px-1.5 py-0.5 rounded'
-                : 'text-gray-700'
+                ? 'text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-md border border-rose-500/25'
+                : isDueToday
+                ? 'text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/25'
+                : 'text-slate-300'
             }`}
           >
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3.5 h-3.5" />
             <span>{assignment.dueDate}</span>
           </span>
 
           {assignment.attachments.length > 0 && (
-            <span className="inline-flex items-center space-x-1 text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-[10px]">
-              <FileText className="w-3 h-3 text-indigo-500" />
+            <span className="inline-flex items-center space-x-1 text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md text-[11px] border border-slate-700/80">
+              <FileText className="w-3 h-3 text-indigo-400" />
               <span>{assignment.attachments.length} {assignment.attachments.length === 1 ? 'file' : 'files'}</span>
             </span>
           )}
@@ -143,11 +149,11 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
 
         <div className="flex items-center space-x-2">
           {assignment.isVerified ? (
-            <span className="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md">
               ✓ Verified
             </span>
           ) : (
-            <span className="text-[10px] text-gray-400">
+            <span className="text-[11px] text-slate-500">
               {assignment.teacher.split(' ').slice(-1)[0]}
             </span>
           )}

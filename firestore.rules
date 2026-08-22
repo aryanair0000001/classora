@@ -15,8 +15,22 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isEnrolled(classId) {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/classes/$(classId)/members/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         request.auth.uid in getUserData().enrolledClassIds)
+      );
+    }
+
+    function isCRorFaculty(classId) {
+      return isSignedIn() && (
+        getUserData().role in ['CR', 'FACULTY', 'ADMIN']
+      );
     }
 
     // Test connection document
@@ -24,34 +38,67 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // User profiles
+    // User profiles - strict owner-only access
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == userId;
+      allow list: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+    }
+
+    // Universal Universities collection
+    match /universities/{universityId} {
+      allow read: if true;
+      allow write: if isSignedIn() && getUserData().role in ['FACULTY', 'ADMIN'];
     }
 
     // Class cohorts
     match /classes/{classId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow create: if isSignedIn() && getUserData().role in ['CR', 'FACULTY', 'ADMIN'];
+      allow update: if isSignedIn() && (isCRorFaculty(classId) || isOwner(resource.data.crEmail));
+      allow delete: if isSignedIn() && getUserData().role in ['FACULTY', 'ADMIN'];
+
+      // Class members subcollection
+      match /members/{memberId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(memberId) || isCRorFaculty(classId);
+      }
     }
 
     // Assignments
     match /assignments/{assignmentId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create: if isSignedIn() && isCRorFaculty(request.resource.data.classId);
+      allow update: if isSignedIn() && (
+        isCRorFaculty(resource.data.classId) ||
+        // Allow students to update only their own completions or comments
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completions', 'updatedAt'])
+      );
+      allow delete: if isSignedIn() && isCRorFaculty(resource.data.classId);
+    }
+
+    // Per-user Assignment Completions
+    match /completions/{completionId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid
+      );
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Announcements
     match /announcements/{announcementId} {
       allow read: if isSignedIn();
+      allow create: if isSignedIn() && isCRorFaculty(request.resource.data.classId);
+      allow update, delete: if isSignedIn() && isCRorFaculty(resource.data.classId);
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId) || isOwner(resource.data.recipientId);
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.userId) || isOwner(resource.data.recipientId);
     }
   }
 }

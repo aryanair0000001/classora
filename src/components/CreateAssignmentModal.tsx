@@ -9,7 +9,8 @@ import {
   BookOpen,
   FileText,
   AlertCircle,
-  Paperclip
+  Paperclip,
+  Sparkles
 } from 'lucide-react';
 import { Priority, Role, Attachment } from '../types/index.js';
 
@@ -136,40 +137,41 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white rounded-xl border border-gray-200 w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-50 animate-in fade-in duration-200">
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-slate-100">
+        
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+        <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/80">
           <div>
-            <h2 className="text-sm font-bold text-gray-900 font-mono flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-              <span>PUBLISH ACADEMIC ASSIGNMENT</span>
+            <h2 className="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+              <span>Publish Academic Assignment</span>
             </h2>
-            <p className="text-[11px] text-gray-500 mt-0.5">
-              Broadcast assignment specifications, files, and milestones to the class cohort.
+            <p className="text-xs text-slate-400 mt-0.5">
+              Broadcast specifications, milestones, and attachments to the class.
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 p-1 rounded-md hover:bg-gray-200 transition-colors"
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Form */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3 bg-rose-950/40 border border-rose-500/50 rounded-xl text-xs text-rose-300 flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+            <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
               Assignment Title *
             </label>
             <input
@@ -178,23 +180,23 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
               placeholder="e.g. Implement B+ Tree Indexing in C++"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           {/* Subject & Teacher Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
                 Subject Preset / Code
               </label>
               <select
                 value={subjectCode}
                 onChange={e => handleSubjectChange(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full px-3 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
               >
                 {COMMON_SUBJECTS.map(s => (
-                  <option key={s.code} value={s.code}>
+                  <option key={s.code} value={s.code} className="bg-slate-900 text-white">
                     [{s.code}] {s.name}
                   </option>
                 ))}
@@ -202,7 +204,7 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
                 Course Faculty / Instructor
               </label>
               <input
@@ -210,31 +212,31 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
                 value={teacher}
                 onChange={e => setTeacher(e.target.value)}
                 placeholder="Dr. Rajiv Kumar"
-                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
 
-          {/* Priority & Due Date */}
+          {/* Priority, Effort & Due Date */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
                 Urgency Priority
               </label>
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value as Priority)}
-                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full px-3 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
               >
-                <option value="Critical">🔴 Critical</option>
-                <option value="High">🟠 High</option>
-                <option value="Normal">🟡 Normal</option>
-                <option value="Low">🟢 Low</option>
+                <option value="Critical" className="bg-slate-900">🔴 Critical</option>
+                <option value="High" className="bg-slate-900">🟠 High</option>
+                <option value="Normal" className="bg-slate-900">🟡 Normal</option>
+                <option value="Low" className="bg-slate-900">🟢 Low</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
                 Effort (Hours)
               </label>
               <input
@@ -244,12 +246,12 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
                 max="50"
                 value={estimatedHours}
                 onChange={e => setEstimatedHours(Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
                 Submission Deadline
               </label>
               <input
@@ -262,14 +264,14 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
                     `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                   );
                 }}
-                className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+            <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
               Description / Problem Statement
             </label>
             <textarea
@@ -277,26 +279,26 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Outline the core objective, problem constraints, and submission criteria..."
-              className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             ></textarea>
           </div>
 
           {/* Step Guidelines Builder */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+            <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
               Submission Guidelines Checklist
             </label>
             <div className="space-y-1.5 mb-2">
               {instructions.map((ins, i) => (
-                <div key={i} className="flex items-center space-x-2 text-xs bg-gray-50 p-2 rounded border border-gray-200">
-                  <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center font-mono flex-shrink-0">
+                <div key={i} className="flex items-center space-x-2 text-xs bg-slate-800/40 p-2 rounded-xl border border-slate-800 text-slate-200">
+                  <span className="w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold flex items-center justify-center font-mono shrink-0">
                     {i + 1}
                   </span>
-                  <span className="flex-1 text-gray-700">{ins}</span>
+                  <span className="flex-1">{ins}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveInstruction(i)}
-                    className="text-gray-400 hover:text-red-500 p-0.5"
+                    className="text-slate-500 hover:text-rose-400 p-1 rounded transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -316,12 +318,12 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
                     handleAddInstruction();
                   }
                 }}
-                className="flex-1 px-3 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3.5 py-2 text-xs bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
               <button
                 type="button"
                 onClick={handleAddInstruction}
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-md transition-colors"
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors border border-slate-700"
               >
                 Add Step
               </button>
@@ -330,11 +332,11 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
 
           {/* Real Attachments Upload */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase font-mono mb-1">
+            <label className="block text-xs font-bold text-slate-300 uppercase font-mono mb-1.5">
               Attachments (PDF, Specs, Code Starters)
             </label>
 
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 text-center bg-gray-50/50 hover:bg-gray-50 transition-colors">
+            <div className="border-2 border-dashed border-slate-800 rounded-xl p-4 text-center bg-slate-950/50 hover:bg-slate-950 transition-colors">
               <input
                 type="file"
                 id="file-upload"
@@ -344,34 +346,34 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
               />
               <label
                 htmlFor="file-upload"
-                className="cursor-pointer flex flex-col items-center justify-center space-y-1"
+                className="cursor-pointer flex flex-col items-center justify-center space-y-1.5"
               >
-                <Paperclip className="w-5 h-5 text-indigo-500" />
-                <span className="text-xs font-semibold text-indigo-600 hover:underline">
+                <Paperclip className="w-5 h-5 text-indigo-400" />
+                <span className="text-xs font-semibold text-indigo-400 hover:underline">
                   Click to browse files or drag here
                 </span>
-                <span className="text-[10px] text-gray-400 font-mono">
+                <span className="text-[10px] text-slate-500 font-mono">
                   Supported: PDF, ZIP, DOCX, TXT
                 </span>
               </label>
             </div>
 
             {attachments.length > 0 && (
-              <div className="mt-2 space-y-1">
+              <div className="mt-2 space-y-1.5">
                 {attachments.map(att => (
                   <div
                     key={att.id}
-                    className="flex items-center justify-between px-3 py-1.5 bg-indigo-50/60 border border-indigo-100 rounded text-xs"
+                    className="flex items-center justify-between px-3 py-2 bg-indigo-950/30 border border-indigo-500/30 rounded-xl text-xs"
                   >
                     <div className="flex items-center space-x-2 truncate">
-                      <FileText className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                      <span className="font-semibold text-gray-800 truncate">{att.name}</span>
-                      <span className="text-gray-400 font-mono text-[10px]">({att.size})</span>
+                      <FileText className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                      <span className="font-semibold text-slate-200 truncate">{att.name}</span>
+                      <span className="text-slate-500 font-mono text-[10px]">({att.size})</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveAttachment(att.id)}
-                      className="text-gray-400 hover:text-red-600"
+                      className="text-slate-500 hover:text-rose-400 p-1"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -382,18 +384,18 @@ export const CreateAssignmentModal: React.FC<CreateAssignmentModalProps> = ({
           </div>
 
           {/* Footer Submit */}
-          <div className="pt-3 border-t border-gray-200 flex items-center justify-end space-x-2">
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors border border-slate-700"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center space-x-1.5 disabled:opacity-50"
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/30 transition-colors flex items-center space-x-1.5 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span>Publishing to Class...</span>

@@ -1,0 +1,340 @@
+{
+  "profile": {
+    "id": "user-aryan-01",
+    "name": "Aryan Nair",
+    "email": "aryanair0000001@gmail.com",
+    "role": "FACULTY",
+    "activeClassId": "cohort-stan-cs301",
+    "enrolledClassIds": [
+      "cohort-cu-cse4-a",
+      "cohort-stan-cs301"
+    ],
+    "university": "Chandigarh University"
+  },
+  "universities": [
+    {
+      "id": "univ-cu",
+      "name": "Chandigarh University",
+      "country": "India",
+      "campus": "Gharuan Main Campus"
+    },
+    {
+      "id": "univ-iitd",
+      "name": "Indian Institute of Technology (IIT) Delhi",
+      "country": "India",
+      "campus": "Hauz Khas"
+    },
+    {
+      "id": "univ-stanford",
+      "name": "Stanford University",
+      "country": "United States",
+      "campus": "Main Quad"
+    },
+    {
+      "id": "univ-mit",
+      "name": "Massachusetts Institute of Technology (MIT)",
+      "country": "United States",
+      "campus": "Cambridge"
+    },
+    {
+      "id": "univ-du",
+      "name": "Delhi University",
+      "country": "India",
+      "campus": "North Campus"
+    }
+  ],
+  "classes": [
+    {
+      "id": "cohort-cu-cse4-a",
+      "code": "CU-24CSE-4A",
+      "name": "B.Tech CSE - 4th Semester (Section A)",
+      "universityId": "univ-cu",
+      "universityName": "Chandigarh University",
+      "program": "Bachelor of Engineering / B.Tech",
+      "branch": "Computer Science & Engineering",
+      "semester": "Semester 4",
+      "section": "Section A (CSE-4A)",
+      "academicYear": "2025-2026",
+      "totalStudents": 74,
+      "crName": "Aryan Nair (Class Representative)",
+      "crEmail": "aryanair0000001@gmail.com",
+      "facultyInCharge": "Dr. Rajiv Kumar",
+      "createdAt": "2026-01-15T08:00:00.000Z"
+    },
+    {
+      "id": "cohort-stan-cs301",
+      "code": "STAN-CS301-B",
+      "name": "CS-301 Distributed Systems & OS Lab",
+      "universityId": "univ-stanford",
+      "universityName": "Stanford University",
+      "program": "B.S. Computer Science",
+      "branch": "Systems & Architecture",
+      "semester": "Spring Term",
+      "section": "Section B",
+      "academicYear": "2025-2026",
+      "totalStudents": 65,
+      "crName": "Sarah Jenkins",
+      "crEmail": "sarah.j@stanford.edu",
+      "facultyInCharge": "Prof. David Malan",
+      "createdAt": "2026-02-01T08:00:00.000Z"
+    }
+  ],
+  "members": {
+    "cohort-cu-cse4-a": [
+      {
+        "id": "mem-1",
+        "name": "Aryan Nair (CR)",
+        "email": "aryanair0000001@gmail.com",
+        "role": "CR",
+        "rollNo": "22CS0142",
+        "joinedAt": "2026-01-15"
+      },
+      {
+        "id": "mem-2",
+        "name": "Dr. Rajiv Kumar",
+        "email": "rajiv.cse@cumail.in",
+        "role": "FACULTY",
+        "joinedAt": "2026-01-10"
+      },
+      {
+        "id": "mem-3",
+        "name": "Ayush Sharma",
+        "email": "ayush.22cs@cumail.in",
+        "role": "STUDENT",
+        "rollNo": "22CS0104",
+        "joinedAt": "2026-01-16"
+      },
+      {
+        "id": "mem-4",
+        "name": "Priya Patel",
+        "email": "priya.22cs@cumail.in",
+        "role": "STUDENT",
+        "rollNo": "22CS0118",
+        "joinedAt": "2026-01-16"
+      },
+      {
+        "id": "mem-5",
+        "name": "Rohan Gupta",
+        "email": "rohan.22cs@cumail.in",
+        "role": "STUDENT",
+        "rollNo": "22CS0122",
+        "joinedAt": "2026-01-17"
+      },
+      {
+        "id": "mem-6",
+        "name": "Ananya Verma",
+        "email": "ananya.22cs@cumail.in",
+        "role": "STUDENT",
+        "rollNo": "22CS0135",
+        "joinedAt": "2026-01-17"
+      }
+    ]
+  },
+  "assignments": [
+    {
+      "id": "CU-CS401",
+      "classId": "cohort-cu-cse4-a",
+      "title": "Design & Implement B+ Tree Indexing in C++/Java",
+      "subjectCode": "CST-241",
+      "subjectName": "Database Management Systems",
+      "teacher": "Dr. Rajiv Kumar",
+      "owner": "Ayush Sharma",
+      "description": "Implement a disk-backed B+ tree index structure with node splitting, merging, and range query support as per the lecture 14 specifications.",
+      "status": "Active",
+      "priority": "Critical",
+      "estimatedHours": 4.5,
+      "dueDate": "Today • 11:59 PM",
+      "dueDateISO": "2026-08-19T00:50:50.758Z",
+      "relativeTime": "Due in 6 hours",
+      "isCompleted": true,
+      "isPinned": true,
+      "isVerified": true,
+      "verifiedBy": "Dr. Rajiv Kumar (Faculty)",
+      "instructions": [
+        "Clone starter template and implement Node split & merge logic",
+        "Support range queries: search(startKey, endKey) returning sorted keys",
+        "Include memory leak check using Valgrind or AddressSanitizer",
+        "Submit zipped source code along with a 2-page design PDF report"
+      ],
+      "attachments": [
+        {
+          "id": "att-1",
+          "name": "DBMS_Lab_Assignment_4_Spec.pdf",
+          "size": "1.8 MB",
+          "type": "PDF",
+          "uploadedAt": "2026-08-16T10:00:00.000Z"
+        },
+        {
+          "id": "att-2",
+          "name": "bplus_tree_starter_code.zip",
+          "size": "840 KB",
+          "type": "ZIP",
+          "uploadedAt": "2026-08-16T10:05:00.000Z"
+        }
+      ],
+      "createdAt": "2026-08-15T09:30:00.000Z",
+      "updatedAt": "2026-08-18T19:15:09.187Z",
+      "createdBy": "Aryan Nair (CR)",
+      "createdByRole": "CR",
+      "completedAt": "2026-08-18T19:15:09.187Z"
+    },
+    {
+      "id": "CU-CS402",
+      "classId": "cohort-cu-cse4-a",
+      "title": "Multi-threaded Producer-Consumer Synchronization using Semaphores",
+      "subjectCode": "CST-242",
+      "subjectName": "Operating Systems & System Programming",
+      "teacher": "Prof. Neha Sundaram",
+      "owner": "Priya Patel",
+      "description": "Solve the bounded buffer problem using POSIX semaphores and mutex locks in C/C++. Ensure deadlock freedom and starvation prevention under heavy thread concurrency.",
+      "status": "In Review",
+      "priority": "High",
+      "estimatedHours": 3.5,
+      "dueDate": "Tomorrow • 11:59 PM",
+      "dueDateISO": "2026-08-20T00:50:50.758Z",
+      "relativeTime": "Due Tomorrow",
+      "isCompleted": false,
+      "isPinned": true,
+      "isVerified": true,
+      "verifiedBy": "Prof. Neha Sundaram",
+      "instructions": [
+        "Initialize circular buffer of size N = 10",
+        "Create 5 producer and 5 consumer threads with randomized sleep times",
+        "Record throughput metrics for buffer full vs empty states"
+      ],
+      "attachments": [
+        {
+          "id": "att-3",
+          "name": "OS_Lab_Guidelines_Semaphores.pdf",
+          "size": "1.2 MB",
+          "type": "PDF",
+          "uploadedAt": "2026-08-16T14:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-08-16T12:00:00.000Z",
+      "updatedAt": "2026-08-17T11:00:00.000Z",
+      "createdBy": "Aryan Nair (CR)",
+      "createdByRole": "CR"
+    },
+    {
+      "id": "CU-CS403",
+      "classId": "cohort-cu-cse4-a",
+      "title": "Dijkstra & Prim Minimum Spanning Tree Complex Problem Set",
+      "subjectCode": "CST-243",
+      "subjectName": "Design & Analysis of Algorithms",
+      "teacher": "Dr. V. K. Aggarwal",
+      "owner": "Rohan Gupta",
+      "description": "Handwritten problem sheet and asymptotic complexity proofs for Fibonacci Heap Dijkstra and Kruskal Disjoint Set Union optimization.",
+      "status": "Active",
+      "priority": "Normal",
+      "estimatedHours": 2.5,
+      "dueDate": "Aug 21, 2026 • 05:00 PM",
+      "dueDateISO": "2026-08-21T18:50:50.758Z",
+      "relativeTime": "Due in 3 days",
+      "isCompleted": false,
+      "isPinned": false,
+      "isVerified": true,
+      "verifiedBy": "Dr. V. K. Aggarwal",
+      "instructions": [
+        "Complete questions 1 through 8 from Tutorial Sheet #6",
+        "Scan as a single clear PDF document using CamScanner or Adobe Scan",
+        "Physical paper submission also required during Friday 10:00 AM lecture"
+      ],
+      "attachments": [
+        {
+          "id": "att-4",
+          "name": "DAA_Tutorial_Sheet_6.pdf",
+          "size": "950 KB",
+          "type": "PDF",
+          "uploadedAt": "2026-08-17T09:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "updatedAt": "2026-08-17T09:00:00.000Z",
+      "createdBy": "Dr. V. K. Aggarwal",
+      "createdByRole": "FACULTY"
+    },
+    {
+      "id": "CU-CS404",
+      "classId": "cohort-cu-cse4-a",
+      "title": "Responsive Portfolio Web Application using Tailwind CSS",
+      "subjectCode": "CST-244",
+      "subjectName": "Full Stack Web Engineering",
+      "teacher": "Prof. Ankit Sharma",
+      "owner": "Ananya Verma",
+      "description": "Create a fully accessible mobile-friendly developer portfolio with dark/light modes, project showcase, and dynamic contact form handling.",
+      "status": "Active",
+      "priority": "Low",
+      "estimatedHours": 2,
+      "dueDate": "Aug 25, 2026 • 11:59 PM",
+      "dueDateISO": "2026-08-25T18:50:50.758Z",
+      "relativeTime": "Due in 7 days",
+      "isCompleted": true,
+      "completedAt": "2026-08-18T08:30:00.000Z",
+      "isPinned": false,
+      "isVerified": false,
+      "instructions": [
+        "Deploy project to Vercel or GitHub Pages",
+        "Submit live link and GitHub repository URL in LMS portal"
+      ],
+      "attachments": [],
+      "createdAt": "2026-08-17T15:00:00.000Z",
+      "updatedAt": "2026-08-18T08:30:00.000Z",
+      "createdBy": "Aryan Nair (CR)",
+      "createdByRole": "CR"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "ann-1",
+      "classId": "cohort-cu-cse4-a",
+      "title": "🚨 Mid-Term Practical Evaluation Schedule Announced",
+      "content": "Database Systems (CST-241) and OS Lab (CST-242) practical evaluations are scheduled for Friday 9:30 AM in Lab 304. Bring your verified physical lab journals.",
+      "author": "Dr. Rajiv Kumar (Faculty In-Charge)",
+      "authorRole": "FACULTY",
+      "priority": "Urgent",
+      "createdAt": "2026-08-18T16:50:50.758Z",
+      "relativeTime": "2 hours ago"
+    },
+    {
+      "id": "ann-2",
+      "classId": "cohort-cu-cse4-a",
+      "title": "📢 CR Notice: Final Project Group Lists Due Tomorrow",
+      "content": "All class students must submit their 3-member project groups via the class WhatsApp group or directly to CR Aryan before 5:00 PM tomorrow. Unassigned students will be randomized by faculty.",
+      "author": "Aryan Nair (CR)",
+      "authorRole": "CR",
+      "priority": "Normal",
+      "createdAt": "2026-08-17T22:50:50.758Z",
+      "relativeTime": "Yesterday"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1",
+      "title": "🚨 Deadline Warning: CST-241",
+      "message": "Design & Implement B+ Tree Indexing is due in 6 hours (11:59 PM).",
+      "type": "reminder",
+      "referenceId": "CU-CS401",
+      "timestamp": "15m ago",
+      "isRead": true
+    },
+    {
+      "id": "notif-2",
+      "title": "✓ Verified by Faculty: Dr. Rajiv Kumar",
+      "message": "Assignment CU-CS401 has been verified with official evaluation criteria.",
+      "type": "verification",
+      "referenceId": "CU-CS401",
+      "timestamp": "2h ago",
+      "isRead": true
+    },
+    {
+      "id": "notif-3",
+      "title": "📝 New Assignment Published by CR",
+      "message": "Producer-Consumer Synchronization (CST-242) published by Aryan Nair.",
+      "type": "assignment",
+      "referenceId": "CU-CS402",
+      "timestamp": "Yesterday",
+      "isRead": true
+    }
+  ]
+}

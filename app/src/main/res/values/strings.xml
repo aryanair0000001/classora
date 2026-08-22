@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Classora</string>
+    <string name="app_tagline">Universal Academic Deadline &amp; Assignment Tracker</string>
 </resources>

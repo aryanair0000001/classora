@@ -42,12 +42,12 @@ export const ClassManagementModal: React.FC<ClassManagementModalProps> = ({
 
   // New Class Form State
   const [newClassName, setNewClassName] = useState('');
-  const [newUniversity, setNewUniversity] = useState('Chandigarh University');
-  const [newProgram, setNewProgram] = useState('B.Tech Computer Science & Engineering');
-  const [newSemester, setNewSemester] = useState('Semester 4');
-  const [newSection, setNewSection] = useState('Section A');
+  const [newUniversity, setNewUniversity] = useState(activeCohort?.universityName || 'Global University');
+  const [newProgram, setNewProgram] = useState(activeCohort?.program || 'Computer Science & Engineering');
+  const [newSemester, setNewSemester] = useState(activeCohort?.semester || 'Semester 1');
+  const [newSection, setNewSection] = useState(activeCohort?.section || 'Section A');
   const [newAcademicYear, setNewAcademicYear] = useState('2025-2026');
-  const [newFaculty, setNewFaculty] = useState('Dr. Rajiv Kumar');
+  const [newFaculty, setNewFaculty] = useState(activeCohort?.facultyInCharge || 'Faculty Advisor');
 
   const handleCopyCode = () => {
     if (activeCohort?.code) {

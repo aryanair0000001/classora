@@ -16,7 +16,14 @@ import {
   Megaphone,
   ArrowRight,
   TrendingUp,
-  Download
+  Download,
+  Flame,
+  UserCheck,
+  BrainCircuit,
+  Settings,
+  ShieldCheck,
+  GraduationCap,
+  Trophy
 } from 'lucide-react';
 
 import {
@@ -26,19 +33,35 @@ import {
   ClassMember,
   Role,
   AppNotification,
-  UserProfile
+  UserProfile,
+  JoinRequest,
+  MainNavigationTab
 } from './types/index.js';
 import { api } from './services/api.js';
+import { sortAndEnrichAssignments, calculateAcademicMetrics } from './utils/deadlineEngine.js';
 
 import { Header } from './components/Header.js';
+import { FireZoneBanner } from './components/FireZoneBanner.js';
 import { AssignmentCard } from './components/AssignmentCard.js';
 import { AssignmentDetailModal } from './components/AssignmentDetailModal.js';
 import { CreateAssignmentModal } from './components/CreateAssignmentModal.js';
 import { ClassManagementModal } from './components/ClassManagementModal.js';
+import { ClassHubModal } from './components/ClassHubModal.js';
+import { AIStudyHubModal } from './components/AIStudyHubModal.js';
 import { BroadcastNoticeModal } from './components/BroadcastNoticeModal.js';
 import { NotificationsDrawer } from './components/NotificationsDrawer.js';
 import { CalendarView } from './components/CalendarView.js';
 import { GoogleWorkspaceModal } from './components/GoogleWorkspaceModal.js';
+import { OnboardingModal } from './components/OnboardingModal.js';
+import { LegalModal } from './components/LegalModals.js';
+import { OfflineBanner } from './components/OfflineBanner.js';
+import { BottomNav } from './components/BottomNav.js';
+import { QuickActionSheet } from './components/QuickActionSheet.js';
+import { NotesHubView } from './components/NotesHubView.js';
+import { LeaderboardView } from './components/LeaderboardView.js';
+import { AnalyticsView } from './components/AnalyticsView.js';
+import { ProfileView } from './components/ProfileView.js';
+import { TimetableWidget } from './components/TimetableWidget.js';
 import { initAuth } from './services/firebase.js';
 import { User } from 'firebase/auth';
 
@@ -51,9 +74,12 @@ export default function App() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // UI Filtering & Navigation States
+  const [activeNavTab, setActiveNavTab] = useState<MainNavigationTab>('home');
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
   const [selectedSubject, setSelectedSubject] = useState<string>('ALL');
@@ -65,8 +91,12 @@ export default function App() {
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
   const [isClassManagerOpen, setIsClassManagerOpen] = useState(false);
+  const [isClassHubOpen, setIsClassHubOpen] = useState(false);
+  const [isAIHubOpen, setIsAIHubOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isGoogleHubOpen, setIsGoogleHubOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [legalModalType, setLegalModalType] = useState<'privacy' | 'terms' | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -98,10 +128,20 @@ export default function App() {
         api.getClassMembers()
       ]);
 
-      setAssignments(assns);
+      setAssignments(sortAndEnrichAssignments(assns));
       setAnnouncements(anns);
       setNotifications(notifs);
       setMembers(mems);
+
+      // If user is CR, load pending requests count
+      if (prof.role === 'CR' || prof.role === 'ADMIN') {
+        try {
+          const reqs = await api.getJoinRequests();
+          setPendingRequests(reqs);
+        } catch {
+          // ignore
+        }
+      }
     } catch (err) {
       console.error('Failed to load application state:', err);
     } finally {
@@ -113,7 +153,24 @@ export default function App() {
     loadData();
   }, [selectedPriority, selectedSubject, selectedStatus, searchQuery]);
 
-  // Role switching
+  // Dynamic Metrics calculation via deadline engine
+  const metrics = calculateAcademicMetrics(assignments);
+  const totalTasks = metrics.total;
+  const completedTasks = metrics.completed;
+  const criticalTasks = metrics.critical;
+  const overdueTasks = metrics.overdue;
+  const completionRate = metrics.completionPercentage;
+  const verifiedCount = assignments.filter(a => a.isVerified).length;
+
+  // Find most urgent uncompleted assignment for Fire Zone (< 24h or overdue)
+  const urgentAssignment = assignments.find(
+    a => !a.isCompleted && (
+      a.priority === 'Critical' ||
+      a.dueDate.toLowerCase().includes('today') ||
+      new Date(a.dueDateISO).getTime() - Date.now() < 24 * 3600 * 1000
+    )
+  ) || null;
+
   const handleRoleChange = async (role: Role) => {
     try {
       await api.setRole(role);
@@ -179,29 +236,6 @@ export default function App() {
     }
   };
 
-  const handleVerifyAssignment = async (id: string) => {
-    try {
-      const verified = await api.verifyAssignment(id);
-      setAssignments(prev => prev.map(a => (a.id === id ? verified : a)));
-      if (selectedAssignment && selectedAssignment.id === id) {
-        setSelectedAssignment(verified);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDeleteAssignment = async (id: string) => {
-    if (!window.confirm('Are you sure you want to remove/archive this assignment from the class?')) return;
-    try {
-      await api.deleteAssignment(id);
-      setAssignments(prev => prev.filter(a => a.id !== id));
-      setSelectedAssignment(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Create Assignment
   const handleCreateAssignment = async (data: any) => {
     await api.createAssignment(data);
@@ -209,8 +243,12 @@ export default function App() {
   };
 
   // Broadcast Notice
-  const handleBroadcastNotice = async (data: any) => {
-    await api.createAnnouncement(data);
+  const handleBroadcastNotice = async (title: string, message: string, urgency: 'INFO' | 'URGENT' | 'CRITICAL') => {
+    await api.createAnnouncement({
+      title,
+      content: message,
+      priority: urgency === 'CRITICAL' ? 'Urgent' : urgency === 'URGENT' ? 'Normal' : 'Info'
+    });
     await loadData();
   };
 
@@ -220,21 +258,19 @@ export default function App() {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
-  // Metrics calculations
-  const totalTasks = assignments.length;
-  const completedTasks = assignments.filter(a => a.isCompleted).length;
-  const criticalTasks = assignments.filter(a => !a.isCompleted && (a.priority === 'Critical' || a.priority === 'High')).length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const verifiedCount = assignments.filter(a => a.isVerified).length;
-
+  // User role and course metadata
   const userRole = profile?.role || 'CR';
 
   // Get distinct subjects for filter pill
   const subjects = Array.from(new Set(assignments.map(a => a.subjectCode)));
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 selection:bg-indigo-500 selection:text-white">
-      {/* 1. Academic Header */}
+    <div className="min-h-screen bg-slate-950 flex flex-col font-sans text-slate-100 selection:bg-indigo-500 selection:text-white">
+      
+      {/* Offline Status Listener */}
+      <OfflineBanner />
+
+      {/* 1. Academic Sticky Header */}
       <Header
         cohort={activeCohort}
         enrolledClasses={enrolledClasses}
@@ -242,124 +278,220 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         notifications={notifications}
+        pendingRequestsCount={pendingRequests.length}
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenCreateTask={() => setIsCreateTaskOpen(true)}
         onOpenBroadcastNotice={() => setIsBroadcastOpen(true)}
         onOpenClassManager={() => setIsClassManagerOpen(true)}
+        onOpenClassHub={() => setIsClassHubOpen(true)}
+        onOpenAIHub={() => setIsAIHubOpen(true)}
         onSwitchClass={handleSwitchClass}
         onOpenGoogleHub={() => setIsGoogleHubOpen(true)}
+        onOpenRoleModal={() => setIsOnboardingOpen(true)}
       />
 
-      {/* 2. Interactive Role Switcher & Environment Bar */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      {/* 2. Interactive Role Switcher & Navigation Tabs */}
+      <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        
         <div className="flex items-center space-x-2">
-          <span className="text-[11px] font-bold uppercase font-mono text-gray-400">
-            Active Role:
+          <span className="text-[11px] font-bold uppercase font-mono text-slate-400">
+            Role Mode:
           </span>
-          <div className="inline-flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
-            {(['STUDENT', 'CR', 'FACULTY'] as Role[]).map(r => (
+          <div className="inline-flex bg-slate-950 p-0.5 rounded-xl border border-slate-800">
+            {(['STUDENT', 'CR', 'TEACHER'] as Role[]).map(r => (
               <button
                 key={r}
                 onClick={() => handleRoleChange(r)}
-                className={`px-3 py-1 text-xs font-semibold rounded-md font-mono transition-all ${
+                className={`px-3 py-1 text-xs font-semibold rounded-lg font-mono transition-all ${
                   userRole === r
-                    ? 'bg-white text-indigo-700 shadow-xs border border-gray-200/60 font-bold'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-indigo-600 text-white shadow font-bold'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {r === 'CR' ? 'Class Rep (CR)' : r}
+                {r === 'CR' ? 'Class Rep (CR)' : r === 'TEACHER' ? 'Faculty' : 'Student'}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Class Code pill */}
-        <div className="flex items-center space-x-2 text-xs font-mono text-gray-600">
-          <span className="text-gray-400">Cohort Code:</span>
+        {/* Desktop Navigation Tabs */}
+        <div className="hidden md:flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {[
+            { id: 'home', label: 'Dashboard', icon: BookOpen },
+            { id: 'classes', label: 'Classes', icon: Layers },
+            { id: 'notes', label: 'Notes Hub', icon: BookOpen },
+            { id: 'leaderboard', label: 'Standings', icon: Trophy },
+            { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+            { id: 'ai', label: 'AI Hub', icon: BrainCircuit },
+            { id: 'profile', label: 'Profile', icon: Users }
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeNavTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'classes') {
+                    setIsClassHubOpen(true);
+                  } else if (tab.id === 'ai') {
+                    setIsAIHubOpen(true);
+                  } else {
+                    setActiveNavTab(tab.id as any);
+                  }
+                }}
+                className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg font-medium text-xs transition-colors ${
+                  isActive && tab.id !== 'classes' && tab.id !== 'ai'
+                    ? 'bg-indigo-600 text-white font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Class Code & Hub Fast Trigger */}
+        <div className="flex items-center space-x-3 text-xs font-mono text-slate-400">
+          <span>Cohort:</span>
           <button
-            onClick={() => setIsClassManagerOpen(true)}
-            className="font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors"
+            onClick={() => setIsClassHubOpen(true)}
+            className="font-bold text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 px-2.5 py-0.5 rounded-lg hover:bg-indigo-500/30 transition-colors flex items-center gap-1.5"
+            title="Open Class Hub & Roster"
           >
-            {activeCohort?.code || 'SELECT'}
+            <span>{activeCohort?.code || 'SELECT'}</span>
           </button>
-          <span className="text-gray-300">|</span>
+          <span className="text-slate-700">|</span>
           <button
-            onClick={() => setIsClassManagerOpen(true)}
-            className="flex items-center space-x-1 text-gray-600 hover:text-indigo-600"
+            onClick={() => setIsClassHubOpen(true)}
+            className="flex items-center space-x-1.5 text-slate-400 hover:text-indigo-400 transition-colors"
           >
             <Users className="w-3.5 h-3.5" />
-            <span>{members.length} Members</span>
+            <span>{members.length} Classmates</span>
           </button>
         </div>
+
       </div>
 
-      {/* 3. Main Dashboard Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5">
+      {/* 3. Main Dynamic View Layout */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 pb-24 md:pb-8">
+        
+        {/* Render Active View */}
+        {activeNavTab === 'notes' && (
+          <NotesHubView
+            activeCohort={activeCohort}
+            userRole={userRole}
+            onAskAIAboutNote={(note) => setIsAIHubOpen(true)}
+          />
+        )}
+
+        {activeNavTab === 'leaderboard' && (
+          <LeaderboardView currentUserId={profile?.id} />
+        )}
+
+        {activeNavTab === 'analytics' && (
+          <AnalyticsView />
+        )}
+
+        {activeNavTab === 'profile' && (
+          <ProfileView
+            profile={profile}
+            activeCohort={activeCohort}
+            enrolledClasses={enrolledClasses}
+            onUpdateProfile={(p) => setProfile(p)}
+            onSwitchClass={handleSwitchClass}
+            onOpenPrivacy={() => setLegalModalType('privacy')}
+            onOpenTerms={() => setLegalModalType('terms')}
+            onOpenGoogleSync={() => setIsGoogleHubOpen(true)}
+            onRoleChange={handleRoleChange}
+          />
+        )}
+
+        {activeNavTab === 'home' && (
+          <>
+            {/* Timetable Schedule Strip */}
+            <TimetableWidget />
+
+            {/* Fire Zone Urgency Banner */}
+            {urgentAssignment && (
+              <FireZoneBanner
+                urgentAssignment={urgentAssignment}
+                onOpenDetails={setSelectedAssignment}
+                onToggleComplete={handleToggleComplete}
+              />
+            )}
+
         {/* Metric Overview Strip */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
-            <div className="flex items-center justify-between text-gray-500 text-[11px] font-mono uppercase font-bold">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-sm backdrop-blur-sm">
+            <div className="flex items-center justify-between text-slate-400 text-[11px] font-mono uppercase font-bold">
               <span>Class Assignments</span>
-              <BookOpen className="w-4 h-4 text-indigo-500" />
+              <BookOpen className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="mt-1 text-xl font-bold font-mono text-gray-900">
+            <div className="mt-1.5 text-2xl font-bold font-mono text-white">
               {totalTasks}
             </div>
-            <div className="text-[11px] text-gray-400 mt-0.5">
-              {completedTasks} completed • {totalTasks - completedTasks} active
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              {completedTasks} done • {totalTasks - completedTasks} active
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
-            <div className="flex items-center justify-between text-gray-500 text-[11px] font-mono uppercase font-bold">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-sm backdrop-blur-sm">
+            <div className="flex items-center justify-between text-slate-400 text-[11px] font-mono uppercase font-bold">
               <span>Urgent Dues (&lt; 24h)</span>
-              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <Flame className="w-4 h-4 text-rose-400" />
             </div>
-            <div className="mt-1 text-xl font-bold font-mono text-red-600">
+            <div className="mt-1.5 text-2xl font-bold font-mono text-rose-400">
               {criticalTasks}
             </div>
-            <div className="text-[11px] text-gray-400 mt-0.5">
-              Priority critical or high deadlines
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Priority critical or today deadlines
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
-            <div className="flex items-center justify-between text-gray-500 text-[11px] font-mono uppercase font-bold">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-sm backdrop-blur-sm">
+            <div className="flex items-center justify-between text-slate-400 text-[11px] font-mono uppercase font-bold">
               <span>Faculty Verified</span>
-              <Shield className="w-4 h-4 text-emerald-500" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="mt-1 text-xl font-bold font-mono text-emerald-600">
+            <div className="mt-1.5 text-2xl font-bold font-mono text-emerald-400">
               {verifiedCount}/{totalTasks}
             </div>
-            <div className="text-[11px] text-gray-400 mt-0.5">
-              Official evaluation rubric attached
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Official rubric confirmed
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-xs">
-            <div className="flex items-center justify-between text-gray-500 text-[11px] font-mono uppercase font-bold">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-sm backdrop-blur-sm">
+            <div className="flex items-center justify-between text-slate-400 text-[11px] font-mono uppercase font-bold">
               <span>Completion Rate</span>
-              <TrendingUp className="w-4 h-4 text-indigo-500" />
+              <TrendingUp className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="mt-1 text-xl font-bold font-mono text-indigo-600">
+            <div className="mt-1.5 text-2xl font-bold font-mono text-indigo-300">
               {completionRate}%
             </div>
             {/* Progress bar */}
-            <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2 overflow-hidden">
+            <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2.5 overflow-hidden">
               <div
-                className="bg-indigo-600 h-1.5 rounded-full transition-all"
+                className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500 shadow-sm shadow-indigo-500/50"
                 style={{ width: `${completionRate}%` }}
               ></div>
             </div>
           </div>
+
         </div>
 
-        {/* Content Section: Main Grid (Left: Assignments / Calendar, Right: Notice Board) */}
+        {/* Content Section: 2 Columns (Left: Filters & Assignment Cards / Calendar, Right: Notice Board & Actions) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+          
           {/* Main 2-Column Left: Filters & Assignment Cards */}
           <div className="lg:col-span-2 space-y-4">
+            
             {/* Filter & View Switcher Toolbar */}
-            <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 backdrop-blur-sm">
+              
               {/* Quick Status / Priority Filter Chips */}
               <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
                 <button
@@ -368,40 +500,40 @@ export default function App() {
                     setSelectedStatus('ALL');
                     setSelectedSubject('ALL');
                   }}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
                     selectedPriority === 'ALL' && selectedStatus === 'ALL' && selectedSubject === 'ALL'
-                      ? 'bg-gray-900 text-white font-bold'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-indigo-600 text-white font-bold shadow'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
                   }`}
                 >
                   All ({totalTasks})
                 </button>
                 <button
                   onClick={() => setSelectedPriority(selectedPriority === 'Critical' ? 'ALL' : 'Critical')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
                     selectedPriority === 'Critical'
-                      ? 'bg-red-600 text-white font-bold'
-                      : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                      ? 'bg-rose-600 text-white font-bold shadow'
+                      : 'bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30'
                   }`}
                 >
                   🔴 Critical
                 </button>
                 <button
                   onClick={() => setSelectedStatus(selectedStatus === 'PENDING' ? 'ALL' : 'PENDING')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
                     selectedStatus === 'PENDING'
-                      ? 'bg-indigo-600 text-white font-bold'
-                      : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
+                      ? 'bg-indigo-600 text-white font-bold shadow'
+                      : 'bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 border border-indigo-500/30'
                   }`}
                 >
                   Pending
                 </button>
                 <button
                   onClick={() => setSelectedStatus(selectedStatus === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
-                  className={`px-2.5 py-1 rounded-md transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl transition-all ${
                     selectedStatus === 'COMPLETED'
-                      ? 'bg-emerald-600 text-white font-bold'
-                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                      ? 'bg-emerald-600 text-white font-bold shadow'
+                      : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30'
                   }`}
                 >
                   Done ({completedTasks})
@@ -409,13 +541,13 @@ export default function App() {
               </div>
 
               {/* View Mode Toggle (List vs 14-Day Calendar) */}
-              <div className="inline-flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
+              <div className="inline-flex bg-slate-950 p-1 rounded-xl border border-slate-800">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-md flex items-center space-x-1 transition-all ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition-all ${
                     viewMode === 'list'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-900'
+                      ? 'bg-slate-800 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   <List className="w-3.5 h-3.5" />
@@ -423,32 +555,32 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setViewMode('calendar')}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-md flex items-center space-x-1 transition-all ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition-all ${
                     viewMode === 'calendar'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-900'
+                      ? 'bg-slate-800 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   <CalendarIcon className="w-3.5 h-3.5" />
-                  <span className="font-mono text-[11px]">14-Day Agenda</span>
+                  <span className="font-mono text-[11px]">Agenda</span>
                 </button>
               </div>
             </div>
 
             {/* Subject Filter Pills */}
             {subjects.length > 0 && (
-              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs font-mono">
-                <span className="text-gray-400 text-[10px] uppercase font-bold flex-shrink-0">
+              <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs font-mono">
+                <span className="text-slate-500 text-[10px] uppercase font-bold shrink-0">
                   Course:
                 </span>
                 {subjects.map(s => (
                   <button
                     key={s}
                     onClick={() => setSelectedSubject(selectedSubject === s ? 'ALL' : s)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap transition-colors ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${
                       selectedSubject === s
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                        ? 'bg-indigo-600 text-white shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:bg-slate-850'
                     }`}
                   >
                     {s}
@@ -465,20 +597,20 @@ export default function App() {
               />
             ) : (
               /* High-Density Assignment Cards List */
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {assignments.length === 0 ? (
-                  <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                    <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                    <h3 className="text-sm font-bold text-gray-900 font-mono">
+                  <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-12 text-center backdrop-blur-sm">
+                    <BookOpen className="w-10 h-10 text-slate-700 mx-auto mb-2" />
+                    <h3 className="text-sm font-bold text-white font-mono">
                       No assignments found
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-                      No assignments match your current filters.
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                      No assignments match your current filter parameters.
                     </p>
-                    {(userRole === 'CR' || userRole === 'FACULTY') && (
+                    {(userRole === 'CR' || userRole === 'TEACHER' || userRole === 'FACULTY') && (
                       <button
                         onClick={() => setIsCreateTaskOpen(true)}
-                        className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center space-x-1.5"
+                        className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl inline-flex items-center space-x-1.5 shadow"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Publish New Assignment</span>
@@ -503,19 +635,20 @@ export default function App() {
 
           {/* Right Column: Class Notice Board & Cohort Summary */}
           <div className="space-y-4">
+            
             {/* Notice Board Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
-              <div className="p-3.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <div className="bg-slate-900/80 rounded-2xl border border-slate-800 shadow-sm overflow-hidden backdrop-blur-sm">
+              <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Megaphone className="w-4 h-4 text-indigo-600" />
-                  <h3 className="text-xs font-bold text-gray-900 font-mono">
+                  <Megaphone className="w-4 h-4 text-indigo-400" />
+                  <h3 className="text-xs font-bold text-white font-mono tracking-wide">
                     CLASS NOTICE BOARD
                   </h3>
                 </div>
-                {(userRole === 'CR' || userRole === 'FACULTY') && (
+                {(userRole === 'CR' || userRole === 'TEACHER' || userRole === 'FACULTY') && (
                   <button
                     onClick={() => setIsBroadcastOpen(true)}
-                    className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 font-mono flex items-center space-x-1"
+                    className="text-xs font-bold text-indigo-400 hover:text-indigo-300 font-mono flex items-center space-x-1"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Post</span>
@@ -523,39 +656,39 @@ export default function App() {
                 )}
               </div>
 
-              <div className="divide-y divide-gray-100 max-h-[420px] overflow-y-auto">
+              <div className="divide-y divide-slate-800/80 max-h-[420px] overflow-y-auto">
                 {announcements.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-gray-400 font-mono">
+                  <div className="p-6 text-center text-xs text-slate-500 font-mono">
                     No active class announcements.
                   </div>
                 ) : (
                   announcements.map(ann => (
-                    <div key={ann.id} className="p-3.5 space-y-1.5 hover:bg-gray-50/50 transition-colors">
+                    <div key={ann.id} className="p-4 space-y-1.5 hover:bg-slate-850/50 transition-colors">
                       <div className="flex items-center justify-between">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
                             ann.priority === 'Urgent'
-                              ? 'bg-red-100 text-red-800 border border-red-200'
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                               : ann.priority === 'Normal'
-                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                              : 'bg-blue-100 text-blue-800 border border-blue-200'
+                              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                              : 'bg-slate-800 text-slate-300 border border-slate-700'
                           }`}
                         >
                           {ann.priority === 'Urgent' ? '🚨 URGENT' : ann.priority}
                         </span>
-                        <span className="text-[10px] text-gray-400 font-mono">
+                        <span className="text-[10px] text-slate-500 font-mono">
                           {ann.relativeTime}
                         </span>
                       </div>
 
-                      <h4 className="text-xs font-bold text-gray-900 leading-snug">
+                      <h4 className="text-xs font-bold text-white leading-snug">
                         {ann.title}
                       </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
+                      <p className="text-xs text-slate-300 leading-relaxed">
                         {ann.content}
                       </p>
 
-                      <div className="text-[10px] text-gray-400 font-mono pt-1">
+                      <div className="text-[10px] text-slate-500 font-mono pt-1">
                         Posted by {ann.author}
                       </div>
                     </div>
@@ -565,41 +698,41 @@ export default function App() {
             </div>
 
             {/* Quick Cohort Details Widget */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs space-y-3">
+            <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 shadow-sm space-y-3.5 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold font-mono uppercase text-gray-400">
+                <span className="text-[10px] font-bold font-mono uppercase text-slate-400">
                   Cohort Information
                 </span>
                 <button
-                  onClick={() => setIsClassManagerOpen(true)}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 font-mono"
+                  onClick={() => setIsClassHubOpen(true)}
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 font-mono"
                 >
-                  Manage
+                  Class Hub
                 </button>
               </div>
 
               <div className="space-y-2 text-xs font-mono">
-                <div className="flex justify-between py-1 border-b border-gray-100">
-                  <span className="text-gray-500">Program:</span>
-                  <span className="font-semibold text-gray-900 text-right truncate max-w-[170px]">
+                <div className="flex justify-between py-1 border-b border-slate-800">
+                  <span className="text-slate-500">Program:</span>
+                  <span className="font-semibold text-slate-200 text-right truncate max-w-[170px]">
                     {activeCohort?.branch}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-gray-100">
-                  <span className="text-gray-500">Term / Sec:</span>
-                  <span className="font-semibold text-gray-900">
+                <div className="flex justify-between py-1 border-b border-slate-800">
+                  <span className="text-slate-500">Term / Sec:</span>
+                  <span className="font-semibold text-slate-200">
                     {activeCohort?.semester} • {activeCohort?.section}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-gray-100">
-                  <span className="text-gray-500">CR:</span>
-                  <span className="font-semibold text-indigo-700">
+                <div className="flex justify-between py-1 border-b border-slate-800">
+                  <span className="text-slate-500">CR:</span>
+                  <span className="font-semibold text-indigo-300">
                     {activeCohort?.crName}
                   </span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-gray-500">Advisor:</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-slate-500">Advisor:</span>
+                  <span className="font-semibold text-slate-200">
                     {activeCohort?.facultyInCharge}
                   </span>
                 </div>
@@ -608,25 +741,97 @@ export default function App() {
               <a
                 href={api.getCalendarExportUrl()}
                 download
-                className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-indigo-700 border border-gray-200 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5 font-mono"
+                className="w-full py-2.5 bg-slate-800 hover:bg-slate-750 text-indigo-300 border border-slate-700/80 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center space-x-1.5 font-mono shadow-sm"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export Calendar (.ics)</span>
               </a>
             </div>
+
           </div>
+
         </div>
+        </>
+        )}
       </main>
 
+      {/* Mobile Sticky Bottom Navigation */}
+      <BottomNav
+        activeTab={activeNavTab}
+        onSelectTab={(tab) => {
+          if (tab === 'classes') {
+            setIsClassHubOpen(true);
+          } else if (tab === 'ai') {
+            setIsAIHubOpen(true);
+          } else {
+            setActiveNavTab(tab);
+          }
+        }}
+        onOpenQuickAction={() => setIsQuickActionOpen(true)}
+        userRole={userRole}
+      />
+
+      {/* Quick Action Floating Menu Sheet */}
+      <QuickActionSheet
+        isOpen={isQuickActionOpen}
+        onClose={() => setIsQuickActionOpen(false)}
+        userRole={userRole}
+        onAction={(action) => {
+          if (action === 'assignment') setIsCreateTaskOpen(true);
+          else if (action === 'note') {
+            setActiveNavTab('notes');
+          } else if (action === 'reminder') setIsGoogleHubOpen(true);
+          else if (action === 'join') setIsClassManagerOpen(true);
+          else if (action === 'ai') setIsAIHubOpen(true);
+          else if (action === 'broadcast') setIsBroadcastOpen(true);
+        }}
+      />
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-slate-900 bg-slate-950 py-6 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-mono">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-400">Classora</span>
+            <span>•</span>
+            <span>Universal Academic Platform</span>
+            <span>•</span>
+            <span className="text-emerald-400">Systems Operational</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLegalModalType('privacy')}
+              className="hover:text-indigo-300 transition-colors"
+            >
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => setLegalModalType('terms')}
+              className="hover:text-indigo-300 transition-colors"
+            >
+              Terms of Service
+            </button>
+            <span>•</span>
+            <span>v2.4.0 (Play Store Ready)</span>
+          </div>
+        </div>
+      </footer>
+
       {/* MODALS & DRAWERS */}
+      <LegalModal
+        type={legalModalType}
+        onClose={() => setLegalModalType(null)}
+      />
+
       {selectedAssignment && (
         <AssignmentDetailModal
           assignment={selectedAssignment}
           userRole={userRole}
+          isOpen={!!selectedAssignment}
           onClose={() => setSelectedAssignment(null)}
           onToggleComplete={id => handleToggleComplete(id)}
-          onVerify={handleVerifyAssignment}
-          onDelete={handleDeleteAssignment}
+          onAssignmentUpdated={loadData}
         />
       )}
 
@@ -646,6 +851,25 @@ export default function App() {
         />
       )}
 
+      {isClassHubOpen && (
+        <ClassHubModal
+          isOpen={isClassHubOpen}
+          onClose={() => setIsClassHubOpen(false)}
+          activeCohort={activeCohort}
+          userRole={userRole}
+          profile={profile}
+          onClassUpdated={loadData}
+        />
+      )}
+
+      {isAIHubOpen && (
+        <AIStudyHubModal
+          isOpen={isAIHubOpen}
+          onClose={() => setIsAIHubOpen(false)}
+          assignments={assignments}
+        />
+      )}
+
       {isClassManagerOpen && (
         <ClassManagementModal
           activeCohort={activeCohort}
@@ -659,18 +883,20 @@ export default function App() {
         />
       )}
 
+      {isOnboardingOpen && (
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onComplete={loadData}
+        />
+      )}
+
       <NotificationsDrawer
         notifications={notifications}
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
-        onMarkAllRead={handleMarkAllRead}
-        onSelectReference={refId => {
-          const found = assignments.find(a => a.id === refId);
-          if (found) {
-            setSelectedAssignment(found);
-            setIsNotificationsOpen(false);
-          }
-        }}
+        onMarkAllAsRead={handleMarkAllRead}
+        onClearNotifications={() => setNotifications([])}
       />
 
       <GoogleWorkspaceModal
@@ -685,6 +911,7 @@ export default function App() {
           await loadData();
         }}
       />
+
     </div>
   );
 }
